@@ -13,6 +13,15 @@
 
 #define MAXARGS 10
 
+int strace = 0;
+char command[20];
+
+void strcat(char *dest, const char *src) {
+    while (*dest) { // Move to the end of dest
+        dest++;
+    }
+    while ((*dest++ = *src++)); // Copy src to dest
+}
 struct cmd {
   int type;
 };
@@ -141,6 +150,153 @@ getcmd(char *buf, int nbuf)
   return 0;
 }
 
+// checks all args for strace
+void
+traceOptions(struct cmd *cmd) {
+  struct execcmd *ecmd = (struct execcmd*)cmd;
+  if(strcmp(ecmd->argv[1], "on")==0) {
+    strace = 1;
+  } else if(strcmp(ecmd->argv[1], "off")==0) {
+    strace = 0;
+  } else if(strcmp(ecmd->argv[1], "run")==0) {
+    if (ecmd->argv[2] == 0) {
+      printf(2, "Usage: strace run <command>\n");
+      return;
+    }
+    if (strcmp(ecmd->argv[2], "cd") == 0) {
+      if (ecmd->argv[3] == 0) {
+        printf(2, "Usage: strace run cd <directory>\n");
+        return;
+      }
+      // Change directory in the parent process
+      if (chdir(ecmd->argv[3]) < 0) {
+        printf(2, "cannot cd to %s\n", ecmd->argv[3]);
+      }
+      return; // Exit the function after handling cd
+    }
+    char command[100]; // Adjust size as needed
+    strcpy(command, ecmd->argv[2]);
+    int i;
+    for (i = 3; ecmd->argv[i] != 0; i++) {
+      strcat(command, " ");
+      strcat(command, ecmd->argv[i]);
+    }
+    if(fork1()==0) {
+      trace(1, '\0', 0);
+      runcmd(parsecmd(command));
+      exit(); 
+    } else {
+      wait();
+    }
+  } else if(strcmp(ecmd->argv[1], "dump")==0) {
+    dump();
+  } else if(strcmp(ecmd->argv[1], "-e")==0) {
+      if(ecmd->argv[2]==0) {
+        printf(2, "Usage: strace -e <syscall>\n");
+        return;
+      }
+      strace = 1;
+      strcpy(command, ecmd->argv[2]);
+  } else if(strcmp(ecmd->argv[1], "-s")==0) {
+    if (ecmd->argv[2] == 0) {
+      printf(2, "Usage: strace -s <command>\n");
+      return;
+    }
+    if (strcmp(ecmd->argv[2], "cd") == 0) {
+      if (ecmd->argv[3] == 0) {
+        printf(2, "Usage: strace run cd <directory>\n");
+        return;
+      }
+      // Change directory in the parent process
+      if (chdir(ecmd->argv[3]) < 0) {
+        printf(2, "cannot cd to %s\n", ecmd->argv[3]);
+      }
+      return; // Exit the function after handling cd
+    }
+    char command[100]; // Adjust size as needed
+    strcpy(command, ecmd->argv[2]);
+    int i;
+    for (i = 3; ecmd->argv[i] != 0; i++) {
+      strcat(command, " ");
+      strcat(command, ecmd->argv[i]);
+    }
+    if(fork1()==0) {
+      trace(1, '\0', 1);
+      runcmd(parsecmd(command));
+      exit(); 
+    } else {
+      wait();
+    }
+  } else if(strcmp(ecmd->argv[1], "-f")==0) {
+    if (ecmd->argv[2] == 0) {
+      printf(2, "Usage: strace -s <command>\n");
+      return;
+    }
+    if (strcmp(ecmd->argv[2], "cd") == 0) {
+      if (ecmd->argv[3] == 0) {
+        printf(2, "Usage: strace run cd <directory>\n");
+        return;
+      }
+      // Change directory in the parent process
+      if (chdir(ecmd->argv[3]) < 0) {
+        printf(2, "cannot cd to %s\n", ecmd->argv[3]);
+      }
+      return; // Exit the function after handling cd
+    }
+    char command[100]; // Adjust size as needed
+    strcpy(command, ecmd->argv[2]);
+    int i;
+    for (i = 3; ecmd->argv[i] != 0; i++) {
+      strcat(command, " ");
+      strcat(command, ecmd->argv[i]);
+    }
+    if(fork1()==0) {
+      trace(1, '\0', -1);
+      runcmd(parsecmd(command));
+      exit(); 
+    } else {
+      wait();
+    }
+  } else if(strcmp(ecmd->argv[1], "-o")==0) {
+    if(ecmd->argv[2]==0) {
+      printf(2, "Usage strace -o filename command\n");
+      return;
+    }
+    int fd = open(ecmd->argv[2], O_CREATE | O_WRONLY);
+    if(fd < 0) {
+      printf(2, "Error opening file\n");
+      exit();
+    }
+    if (strcmp(ecmd->argv[3], "cd") == 0) {
+      if (ecmd->argv[4] == 0) {
+        printf(2, "Usage: strace run cd <directory>\n");
+        return;
+      }
+      // Change directory in the parent process
+      if (chdir(ecmd->argv[4]) < 0) {
+        printf(2, "cannot cd to %s\n", ecmd->argv[3]);
+      }
+      return; // Exit the function after handling cd
+    }
+    char command[100]; // Adjust size as needed
+    strcpy(command, ecmd->argv[3]);
+    int i;
+    for (i = 4; ecmd->argv[i] != 0; i++) {
+      strcat(command, " ");
+      strcat(command, ecmd->argv[i]);
+    }
+    if(fork1()==0) {
+      fwrite(fd);
+      trace(1, '\0', 0);
+      runcmd(parsecmd(command));
+      exit(); 
+    } else {
+      wait();
+    }
+    close(fd);
+  }
+}
+
 int
 main(void)
 {
@@ -157,16 +313,29 @@ main(void)
 
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
-    if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
+    if(buf[0] == 's' && buf[1] == 't' && buf[2] == 'r' && buf[3] == 'a' && buf[4] == 'c' && buf[5] == 'e' && buf[6] == ' ') {
+      traceOptions(parsecmd(buf));
+    } else {
+      if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Chdir must be called by the parent, not the child.
       buf[strlen(buf)-1] = 0;  // chop \n
       if(chdir(buf+3) < 0)
         printf(2, "cannot cd %s\n", buf+3);
       continue;
     }
-    if(fork1() == 0)
-      runcmd(parsecmd(buf));
+    if(fork1() == 0) {
+      if(strace == 1) {
+        trace(1, command, 0);
+        runcmd(parsecmd(buf));
+      } else {
+        runcmd(parsecmd(buf));
+      }
+    }
+    if(command[0] != '\0') {
+      command[0] = '\0';
+    }
     wait();
+    }
   }
   exit();
 }

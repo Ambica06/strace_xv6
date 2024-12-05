@@ -37,3 +37,6 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+int trace(int, const char*, int);
+void dump(void);
+int fwrite(int);

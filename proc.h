@@ -63,7 +63,23 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  int trace;                   // 0 for off, 1 for on
+  char traceCmd[20];           // to trace a particular command
+  int succ;                    // print system call details on success or failure
+  int fd;                      // file descriptor for trace file
 };
+
+#define MAX_LENGTH  100;
+
+struct event_buffer {
+  int pid;
+  char sysName[100];
+  char cmdName[100];
+  int retVal;
+};
+
+extern struct event_buffer eBuffer[SDUMP];
+extern int event_ind;
 
 // Process memory is laid out contiguously, low addresses first:
 //   text

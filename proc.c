@@ -49,7 +49,8 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-
+  p->trace = 0;
+  p->succ = 0;
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -161,6 +162,11 @@ fork(void)
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
+
+  np->trace = proc->trace;
+  np->succ = proc->succ;
+  strncpy(np->traceCmd, proc->traceCmd, sizeof(proc->traceCmd) - 1);
+  np->traceCmd[sizeof(proc->traceCmd) - 1] = '\0';
 
   for(i = 0; i < NOFILE; i++)
     if(proc->ofile[i])
