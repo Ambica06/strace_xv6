@@ -58,7 +58,7 @@ sys_kill(void)
 int
 sys_getpid(void)
 {
-  return proc->pid;
+  return myproc()->pid;
 }
 
 int
@@ -69,7 +69,7 @@ sys_sbrk(void)
 
   if(argint(0, &n) < 0)
     return -1;
-  addr = proc->sz;
+  addr = myproc()->sz;
   if(growproc(n) < 0)
     return -1;
   return addr;
@@ -86,7 +86,7 @@ sys_sleep(void)
   acquire(&tickslock);
   ticks0 = ticks;
   while(ticks - ticks0 < n){
-    if(proc->killed){
+    if(myproc()->killed){
       release(&tickslock);
       return -1;
     }
