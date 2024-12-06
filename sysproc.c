@@ -20,19 +20,19 @@ sys_fork(void)
 int
 sys_exit(void)
 {
-  if (proc->trace) {
-    if(proc->traceCmd[0] == '\0') {
+  if (myproc()->trace) {
+    if(strcmp(myproc()->traceCmd, "exit") == 0) {
       cprintf("TRACE pid = %d | command_name = %s | syscall = exit\n",
-            proc->pid,
-            proc->name);
-    } else if(strcmp(proc->traceCmd, "exit") == 0) {
+            myproc()->pid,
+            myproc()->name);
+    } else if(myproc()->trace ==1 && myproc()->traceCmd[0]=='\0') {
       cprintf("TRACE pid = %d | command_name = %s | syscall = exit\n",
-            proc->pid,
-            proc->name);
-    }
-    eBuffer[event_ind].pid = proc->pid;
+            myproc()->pid,
+            myproc()->name);
+    } 
+    eBuffer[event_ind].pid = myproc()->pid;
     strcpy(eBuffer[event_ind].sysName, "exit");
-    strcpy(eBuffer[event_ind].cmdName, proc->name);
+    strcpy(eBuffer[event_ind].cmdName, myproc()->name);
     event_ind = (event_ind + 1) % SDUMP ; 
   }
   exit();
@@ -119,10 +119,10 @@ int sys_trace(void) {
         return -1; 
     if(argint(2, &succ) < 0)  // Retrieve the argument
         return -1; 
-    proc->trace = flag;  // Set the flag for the current process
-    strncpy(proc->traceCmd, traceCmd, sizeof(proc->traceCmd) - 1); // Copy the string safely
-    proc->traceCmd[sizeof(proc->traceCmd) - 1] = '\0'; // Ensure null termination
-    proc->succ = succ;
+    myproc()->trace = flag;  // Set the flag for the current process
+    strncpy(myproc()->traceCmd, traceCmd, sizeof(myproc()->traceCmd) - 1); // Copy the string safely
+    myproc()->traceCmd[sizeof(myproc()->traceCmd) - 1] = '\0'; // Ensure null termination
+    myproc()->succ = succ;
     return 0;
 }
 
@@ -165,6 +165,6 @@ sys_fwrite(void) {
   int fd;
   if(argint(0, &fd) < 0)  // Retrieve the argument
         return -1;
-  proc->fd = fd;
+  myproc()->fd = fd;
   return 0;
 }

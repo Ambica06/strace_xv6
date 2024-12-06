@@ -14,6 +14,7 @@
 #define MAXARGS 10
 
 int strace = 0;
+int temp;
 char command[20];
 
 void strcat(char *dest, const char *src) {
@@ -181,7 +182,7 @@ traceOptions(struct cmd *cmd) {
       strcat(command, " ");
       strcat(command, ecmd->argv[i]);
     }
-    if(fork1()==0) {
+    if(fork()==0) {
       trace(1, '\0', 0);
       runcmd(parsecmd(command));
       exit(); 
@@ -195,6 +196,7 @@ traceOptions(struct cmd *cmd) {
         printf(2, "Usage: strace -e <syscall>\n");
         return;
       }
+      temp = strace;
       strace = 1;
       strcpy(command, ecmd->argv[2]);
   } else if(strcmp(ecmd->argv[1], "-s")==0) {
@@ -332,6 +334,7 @@ main(void)
       }
     }
     if(command[0] != '\0') {
+      strace = temp;
       command[0] = '\0';
     }
     wait();

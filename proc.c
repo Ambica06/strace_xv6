@@ -200,15 +200,13 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
-
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
 
-  np->trace = proc->trace;
-  np->succ = proc->succ;
-  strncpy(np->traceCmd, proc->traceCmd, sizeof(proc->traceCmd) - 1);
-  np->traceCmd[sizeof(proc->traceCmd) - 1] = '\0';
-
+  np->trace = curproc->trace;
+  np->succ = curproc->succ;
+  strncpy(np->traceCmd, curproc->traceCmd, sizeof(curproc->traceCmd) - 1);
+  np->traceCmd[sizeof(curproc->traceCmd) - 1] = '\0';
   for(i = 0; i < NOFILE; i++)
     if(curproc->ofile[i])
       np->ofile[i] = filedup(curproc->ofile[i]);
