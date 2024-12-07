@@ -229,7 +229,7 @@ int copyString(char *dest, const char *src) {
     return i; // Return the number of characters copied
 }
 
-char* getBuffer(int pid, const char* name, const char* sysName, int retVal) {
+extern char* getBuffer(int pid, const char* name, const char* sysName, int retVal) {
     // Allocate a buffer dynamically
     char* buffer = (char*)kalloc(); // Use kalloc() in xv6 to allocate kernel memory
     if (buffer == 0) {
@@ -292,16 +292,16 @@ void syscall(void) {
                 myproc()->name,
                 syscall_names[num],
                 myproc()->tf->eax);
-        } else if(proc->traceCmd[0] == '\0' && proc->succ == 0) {
-          cprintf("TRACE pid = %d | command_name = %s | syscall = %s | return value = %d\n",
+        } else if(myproc()->fd > 2) {
+            char *buffer = getBuffer(myproc()->pid, myproc()->name, syscall_names[num], myproc()->tf->eax); // Define your buffer here
+            filewrite(myproc()->ofile[myproc()->fd], buffer, 100); 
+        } else if(proc->traceCmd[0]=='\0' && proc->succ == 0) {
+            cprintf("TRACE pid = %d | command_name = %s | syscall = %s | return value = %d\n",
                 myproc()->pid,
                 myproc()->name,
                 syscall_names[num],
                 myproc()->tf->eax);
-        } else if(myproc()->fd > 2) {
-            char *buffer = getBuffer(myproc()->pid, myproc()->name, syscall_names[num], myproc()->tf->eax); // Define your buffer here
-            filewrite(myproc()->ofile[myproc()->fd], buffer, 100); 
-        }
+        } 
         log_event(myproc()->pid, myproc()->name, syscall_names[num], myproc()->tf->eax);
     }
     } else {
@@ -309,38 +309,3 @@ void syscall(void) {
         myproc()->tf->eax = -1;
     }
 }
-
-        // if(myproc()->traceCmd[0] == '\0' && myproc()->succ == 0) {
-          // cprintf("TRACE pid = %d | command_name = %s | syscall = %s | return value = %d\n",
-          //       myproc()->pid,
-          //       myproc()->name,
-          //       syscall_names[num],
-          //       myproc()->tf->eax);
-        // } else if(strcmp(myproc()->traceCmd, syscall_names[num])==0) {
-        //   cprintf("TRACE pid = %d | command_name = %s | syscall = %s | return value = %d\n",
-        //         myproc()->pid,
-        //         myproc()->name,
-        //         syscall_names[num],
-        //         myproc()->tf->eax); 
-        // } else if(myproc()->succ == 1 && myproc()->tf->eax != -1) {
-        //   cprintf("TRACE pid = %d | command_name = %s | syscall = %s | return value = %d\n",
-        //         myproc()->pid,
-        //         myproc()->name,
-        //         syscall_names[num],
-        //         myproc()->tf->eax);
-        // } else if(myproc()->succ == -1 && myproc()->tf->eax == -1) {
-        //   cprintf("TRACE pid = %d | command_name = %s | syscall = %s | return value = %d\n",
-        //         myproc()->pid,
-        //         myproc()->name,
-        //         syscall_names[num],
-        //         myproc()->tf->eax);
-        // } else if(myproc()->fd > 2) {
-        //     char *buffer = getBuffer(myproc()->pid, myproc()->name, syscall_names[num], myproc()->tf->eax); // Define your buffer here
-        //     filewrite(myproc()->ofile[myproc()->fd], buffer, 100); 
-        // } else {
-        //   cprintf("TRACE pid = %d | command_name = %s | syscall = %s | return value = %d\n",
-        //         myproc()->pid,
-        //         myproc()->name,
-        //         syscall_names[num],
-        //         myproc()->tf->eax);
-        // }

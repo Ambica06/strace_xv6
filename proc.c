@@ -90,6 +90,7 @@ found:
   p->pid = nextpid++;
   p->trace = 0;
   p->succ = 0;
+  p->traceCmd[0] = '\0';
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -205,8 +206,12 @@ fork(void)
 
   np->trace = curproc->trace;
   np->succ = curproc->succ;
-  strncpy(np->traceCmd, curproc->traceCmd, sizeof(curproc->traceCmd) - 1);
-  np->traceCmd[sizeof(curproc->traceCmd) - 1] = '\0';
+  
+  if(curproc->traceCmd[0]!='\0') {
+    strncpy(np->traceCmd, curproc->traceCmd, sizeof(curproc->traceCmd) - 1);
+    np->traceCmd[sizeof(curproc->traceCmd) - 1] = '\0';
+  } else np->traceCmd[0] = '\0';
+
   for(i = 0; i < NOFILE; i++)
     if(curproc->ofile[i])
       np->ofile[i] = filedup(curproc->ofile[i]);

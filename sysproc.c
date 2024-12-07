@@ -11,6 +11,8 @@ void strcpy(char *dest, const char *src);
 
 int strcmp(const char *s1, const char *s2);
 
+char* getBuffer(int pid, const char* name, const char* sysName, int retVal);
+
 int
 sys_fork(void)
 {
@@ -25,11 +27,14 @@ sys_exit(void)
       cprintf("TRACE pid = %d | command_name = %s | syscall = exit\n",
             myproc()->pid,
             myproc()->name);
-    } else if(myproc()->trace ==1 && myproc()->traceCmd[0]=='\0') {
+    } else if(myproc()->trace ==1 && myproc()->traceCmd[0]=='\0' && myproc()->succ != -1 && myproc()->fd < 2) {
       cprintf("TRACE pid = %d | command_name = %s | syscall = exit\n",
             myproc()->pid,
             myproc()->name);
-    } 
+    } else if(myproc()->fd > 2) {
+      char* buffer = getBuffer(myproc()->pid, myproc()->name, "exit", 1);
+      filewrite(myproc()->ofile[myproc()->fd], buffer, 100); 
+    }
     eBuffer[event_ind].pid = myproc()->pid;
     strcpy(eBuffer[event_ind].sysName, "exit");
     strcpy(eBuffer[event_ind].cmdName, myproc()->name);
@@ -120,8 +125,10 @@ int sys_trace(void) {
     if(argint(2, &succ) < 0)  // Retrieve the argument
         return -1; 
     myproc()->trace = flag;  // Set the flag for the current process
-    strncpy(myproc()->traceCmd, traceCmd, sizeof(myproc()->traceCmd) - 1); // Copy the string safely
-    myproc()->traceCmd[sizeof(myproc()->traceCmd) - 1] = '\0'; // Ensure null termination
+    if(traceCmd) {
+      strncpy(myproc()->traceCmd, traceCmd, sizeof(myproc()->traceCmd) - 1); // Copy the string safely
+      myproc()->traceCmd[sizeof(myproc()->traceCmd) - 1] = '\0'; // Ensure null termination
+    }
     myproc()->succ = succ;
     return 0;
 }
